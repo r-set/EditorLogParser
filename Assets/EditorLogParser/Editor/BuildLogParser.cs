@@ -10,12 +10,7 @@ public class BuildLogParser : EditorWindow
     [MenuItem("Tools/Parse Build Log")]
     public static void ParseBuildLog()
     {
-        string userName = Environment.UserName;
-
-        string logFilePath = $"C:/Users/{userName}/AppData/Local/Unity/Editor/Editor.log";
-		//MacOS ~/Library/Logs/Unity/Editor.log
-		//Linux ~/.config/unity3d/Editor.log
-		
+        string logFilePath = GetLogFilePath();
         string tempLogFilePath = Path.Combine(Application.temporaryCachePath, "Editor_temp.log");
 
         try
@@ -36,6 +31,27 @@ public class BuildLogParser : EditorWindow
                 File.Delete(tempLogFilePath);
             }
         }
+    }
+
+    private static string GetLogFilePath()
+    {
+        string logFilePath = string.Empty;
+
+        if (Application.platform == RuntimePlatform.WindowsEditor)
+        {
+            string userName = Environment.UserName;
+            logFilePath = $"C:/Users/{userName}/AppData/Local/Unity/Editor/Editor.log";
+        }
+        else if (Application.platform == RuntimePlatform.OSXEditor)
+        {
+            logFilePath = $"{Environment.GetFolderPath(Environment.SpecialFolder.Personal)}/Library/Logs/Unity/Editor.log";
+        }
+        else if (Application.platform == RuntimePlatform.LinuxEditor)
+        {
+            logFilePath = $"{Environment.GetFolderPath(Environment.SpecialFolder.Personal)}/.config/unity3d/Editor.log";
+        }
+
+        return logFilePath;
     }
 
     private static List<(string fileName, string size, string percentage)> ParseEditorLog(string filePath)
