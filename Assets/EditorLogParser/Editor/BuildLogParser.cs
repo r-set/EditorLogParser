@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 public class BuildLogParser : EditorWindow
 {
-    private static bool showInternalFiles = false;
+    private bool showInternalFiles = false;
     private static List<(string fileName, string size, string percentage)> cachedFileSizes;
     private Vector2 scrollPosition;
 
@@ -23,7 +23,7 @@ public class BuildLogParser : EditorWindow
 
         if (GUILayout.Button("Parse Build Log"))
         {
-            ParseBuildLog();
+            ParseBuildLog(showInternalFiles);
         }
 
         if (cachedFileSizes == null || cachedFileSizes.Count == 0)
@@ -38,7 +38,7 @@ public class BuildLogParser : EditorWindow
         EditorGUILayout.LabelField("File Name", EditorStyles.boldLabel, GUILayout.Width(position.width / 3));
         EditorGUILayout.LabelField("Size", EditorStyles.boldLabel, GUILayout.Width(position.width / 6));
         EditorGUILayout.LabelField("Percentage", EditorStyles.boldLabel, GUILayout.Width(position.width / 6));
-        EditorGUILayout.LabelField("Action", EditorStyles.boldLabel, GUILayout.Width(position.width / 3));
+        EditorGUILayout.LabelField("Action", EditorStyles.boldLabel, GUILayout.Width(position.width / 6));
         EditorGUILayout.EndHorizontal();
 
         foreach (var (fileName, size, percentage) in cachedFileSizes)
@@ -67,7 +67,7 @@ public class BuildLogParser : EditorWindow
         return fileName.StartsWith("Built-in ") || fileName.Contains("unity_builtin_extra") || fileName.Contains("Packages");
     }
 
-    public static void ParseBuildLog()
+    public static void ParseBuildLog(bool showInternalFiles)
     {
         string logFilePath = GetLogFilePath();
         string tempLogFilePath = Path.Combine(Application.temporaryCachePath, "Editor_temp.log");
@@ -76,10 +76,14 @@ public class BuildLogParser : EditorWindow
         {
             File.Copy(logFilePath, tempLogFilePath, true);
 
-            cachedFileSizes = ParseEditorLog(tempLogFilePath);
-            if (cachedFileSizes == null || cachedFileSizes.Count == 0)
+            var fileSizes = ParseEditorLog(tempLogFilePath, showInternalFiles);
+            if (fileSizes == null || fileSizes.Count == 0)
             {
                 Debug.LogWarning("No relevant file sizes found in the log.");
+            }
+            else
+            {
+                cachedFileSizes = fileSizes;
             }
         }
         catch (IOException e)
@@ -94,7 +98,14 @@ public class BuildLogParser : EditorWindow
         {
             if (File.Exists(tempLogFilePath))
             {
-                File.Delete(tempLogFilePath);
+                try
+                {
+                    File.Delete(tempLogFilePath);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"Failed to delete temporary log file: {e.Message}");
+                }
             }
         }
     }
@@ -120,7 +131,7 @@ public class BuildLogParser : EditorWindow
         return logFilePath;
     }
 
-    private static List<(string fileName, string size, string percentage)> ParseEditorLog(string filePath)
+    private static List<(string fileName, string size, string percentage)> ParseEditorLog(string filePath, bool showInternalFiles)
     {
         var sizePattern = new Regex(@"\s+(\d+(?:\.\d+)?\s*(?:kb|mb))\s+(\d+(\.\d+)?%)\s+(.+)");
         var fileSizes = new List<(string fileName, string size, string percentage)>();
