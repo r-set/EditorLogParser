@@ -11,7 +11,7 @@ public class BuildLogParser : EditorWindow
     private static List<(string fileName, string size, string percentage)> cachedFileSizes;
     private Vector2 scrollPosition;
 
-    [MenuItem("Tools/Parse Build Log")]
+    [MenuItem("Tools/EditorLogParser/Parse Build Log")]
     public static void ShowWindow()
     {
         GetWindow<BuildLogParser>("Parsed Build Log Data");
@@ -23,8 +23,11 @@ public class BuildLogParser : EditorWindow
 
         if (GUILayout.Button("Parse Build Log"))
         {
+            ClearCache();
             ParseBuildLog(showInternalFiles);
         }
+
+        EditorGUILayout.Space();
 
         if (cachedFileSizes == null || cachedFileSizes.Count == 0)
         {
@@ -35,22 +38,22 @@ public class BuildLogParser : EditorWindow
         scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition, GUILayout.Width(position.width), GUILayout.Height(position.height));
 
         EditorGUILayout.BeginHorizontal();
-        EditorGUILayout.LabelField("File Name", EditorStyles.boldLabel, GUILayout.Width(position.width / 3));
-        EditorGUILayout.LabelField("Size", EditorStyles.boldLabel, GUILayout.Width(position.width / 6));
-        EditorGUILayout.LabelField("Percentage", EditorStyles.boldLabel, GUILayout.Width(position.width / 6));
-        EditorGUILayout.LabelField("Action", EditorStyles.boldLabel, GUILayout.Width(position.width / 6));
+        EditorGUILayout.LabelField("File Name", EditorStyles.boldLabel, GUILayout.Width(position.width / 2));
+        EditorGUILayout.LabelField("Size", EditorStyles.boldLabel, GUILayout.Width(position.width / 8));
+        EditorGUILayout.LabelField("Percentage", EditorStyles.boldLabel, GUILayout.Width(position.width / 10));
+        EditorGUILayout.LabelField("Action", EditorStyles.boldLabel, GUILayout.Width(position.width / 8));
         EditorGUILayout.EndHorizontal();
 
         foreach (var (fileName, size, percentage) in cachedFileSizes)
         {
             EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField(fileName, GUILayout.Width(position.width / 3));
-            EditorGUILayout.LabelField(size, GUILayout.Width(position.width / 6));
-            EditorGUILayout.LabelField(percentage, GUILayout.Width(position.width / 6));
+            EditorGUILayout.LabelField(fileName, GUILayout.Width(position.width / 2));
+            EditorGUILayout.LabelField(size, GUILayout.Width(position.width / 8));
+            EditorGUILayout.LabelField(percentage, GUILayout.Width(position.width / 10));
 
             if (!IsInternalFile(fileName))
             {
-                if (GUILayout.Button("Show in Project", GUILayout.Width(position.width / 6)))
+                if (GUILayout.Button("Show in Project", GUILayout.Width(position.width / 8)))
                 {
                     ShowFileInProject(fileName);
                 }
@@ -62,6 +65,11 @@ public class BuildLogParser : EditorWindow
         EditorGUILayout.EndScrollView();
     }
 
+    private static void ClearCache()
+    {
+        cachedFileSizes = null;
+    }
+
     private static bool IsInternalFile(string fileName)
     {
         return fileName.StartsWith("Built-in ") || fileName.Contains("unity_builtin_extra") || fileName.Contains("Packages");
@@ -69,7 +77,11 @@ public class BuildLogParser : EditorWindow
 
     public static void ParseBuildLog(bool showInternalFiles)
     {
+        ClearCache();
+
         string logFilePath = GetLogFilePath();
+        Debug.Log($"Current log file path: {logFilePath}");
+
         string tempLogFilePath = Path.Combine(Application.temporaryCachePath, "Editor_temp.log");
 
         try
@@ -192,3 +204,4 @@ public class BuildLogParser : EditorWindow
         return "Assets/" + fileName;
     }
 }
+

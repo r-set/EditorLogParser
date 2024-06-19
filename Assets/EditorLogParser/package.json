@@ -1,0 +1,14 @@
+{
+  "name": "com.r-set.editor_log_parser",
+  "version": "0.1.0",
+  "displayName": "EditorLogParser",
+  "description": "Parser the EditorLog file and extract file size information from Build Report",
+  "keywords": [
+    "editorlog"
+  ],
+  "author": {
+    "name": "r-set"
+  },
+  "dependencies": {
+  }
+}
